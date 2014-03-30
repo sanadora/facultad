@@ -36,3 +36,4 @@
       x))
 
 (raiz-biseccion f 1 2)
+(quote (hola))
