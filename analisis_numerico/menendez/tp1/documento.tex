@@ -1,0 +1,476 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+
+\title{Trabajo Practico Nro 1}
+\date{09-2014}
+\author{Gortari, Bautista - Mauro, Pedro}
+
+\begin{document}
+
+
+\pagenumbering{gobble}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+\section{Investigacion}
+El problema elegido es la \textbf{Simulacion Numerica de la combustion en una
+caldera a gas natural}. La solucion fue abordada por el metodo de los
+elementos finitos, que es un metodo numerico general para la
+aproximacion de soluciones de ecuaciones diferenciales parciales muy
+utilizado en diversos problemas fisicos e ingenieriles.
+
+La combustion de hidrocarburos en aire es gobernada por mecanismos
+multipasos que comprenden cien o mas reacciones, que si bien no son
+imposibles de resolver, se termina obscureciendo el progreso de las
+reacciones y se dificulta ganar una vision interna de la naturaleza de
+la combustion. Para casos practicos, es conveniente reducir el numero
+de pasos a un pequenio numero de reacciones significativas.
+
+La tarea de investigacion consistia, entonces, en la simulacion numerica de una
+llama y su comparacion con datos experimentales. Obtener los datos en
+una gran caldera en servicio no es sencillo ni economico, por lo que
+se dispone de un limitado conjunto de datos experimentales. 
+
+El procedimiento de solucion numerica consiste en resolver un conjunto
+de ecuaciones utilizando la tecnica de volumenes finitos. En este
+procedimiento, las ecuaciones discretizadas son resueltas usando el
+esquema diferencial hibrido y una ecuacion de correccion de presion.
+El metodo de solucion es desacoplado: las ecuaciones se van
+resolviendo de a grupos con un orden establecido, hasta completar la iteracion.
+Como para ciertas ecuaciones no se dispone de un modelo adecuado, se
+toma la medida de simplificarlas o incluso determinar valores
+constantes.
+
+Luego de la explotacion del modelo, los resultados que se obtienen son
+considerados satisfactorios, aunque indican la necesidad de seguir refinando los modelos para reproducir
+mejor las condiciones reales, aunque la transmision de calor y la composicion
+de los gases de escape resultan estar dentro de los valores esperados segun la
+experiencia de operacion.
+
+Articulo principal:
+\url{http://ojs.c3sl.ufpr.br/ojs/index.php/reterm/article/viewFile/3502/2763}
+
+\section{Resolucion de Problemas}
+
+\subsection{Problema 1 - Numeros Abundantes}
+El algoritmo que desarrollamos para resolver lo pedido es el siguiente:
+\begin{verbatim}
+cr = 0;
+i = 1;
+do
+  s = 0;
+  n = (2 * i) + 1;
+  for div = 1:(n-1);
+      if (rem(n,div) == 0);
+          s = s + div;
+      endif;
+  endfor;
+  if ( s > n );
+     disp(n);
+     cr = cr + 1;
+  endif;
+  i = i + 1;
+until (cr == 5)
+\end{verbatim}
+Con este algoritmo, los numeros abundantes(impares) encontrados
+fueron: 945, 1575, 2205, 2835 y 3465.
+
+\subsection{Problema 2 - Calculo de Mapa Digital de Terreno}
+\subsubsection{Datos Disponibles}
+\begin{tabular}{l c r}
+Coordenada X &Coordenada Y &Altura\\
+91	&6	&1.75 \\
+157	&155	&1.81\\
+100	&279	&2.01\\
+208	&279	&1.96\\
+104	&388	&2.45\\
+305	&0	&2.08\\
+330	&108	&2.07\\
+372	&204	&2.05\\
+384	&282	&2.48\\
+422	&390	&2.60\\
+510	&10	&1.97\\
+532	&93	&1.60\\
+614	&390	&2.42\\
+608	&12	&1.92\\
+712	&117	&1.95\\
+718	&385	&2.39\\
+822	&52	&1.50\\
+816	&248	&2.05\\
+923	&5	&1.81\\
+920	&173	&1.05\\
+923	&385	&2.28\\
+1023	&87	&1.60\\
+1145	&3	&2.21\\
+1105	&380	&2.42\\
+\end{tabular}
+
+
+\begin{figure}[H]
+  \includegraphics[width=0.7\textwidth]{imagenes/datos-puntos.png}
+  \centering
+  \caption{Alturas medidas del terreno.}
+  \label{fig:datos-2d}
+\end{figure}
+
+La figura \ref{fig:datos-2d} muestra el grafico correspondiente a los
+datos disponibles de las alturas del barrio La Ribera.
+
+\subsubsection{Programa Principal}
+\begin{verbatim}
+% tabla con los valores de altura para el barrio La Ribera
+load datos.txt;
+% largo y ancho del terreno 
+lt = 1150;
+at = 400;
+% lado del cuadrado que tomamos como celda, en metros 
+global lado_celda = 20;
+
+ancho = at / lado_celda;
+largo = lt / lado_celda;
+terreno = zeros( ancho , largo);
+
+for i = 1:ancho;
+    disp(i);
+    for j = 1:largo;
+        terreno(i,j) = altura_con_IDW(i,j,datos);
+    endfor;
+endfor;
+save resultado.txt;
+\end{verbatim}
+Este es el codigo correspondiente al programa principal, con el cual
+llamamos a las funciones que calculan el terreno en base a distintos
+algoritmos. 
+
+\subsubsection{NN - Nearest Neighbour}
+\paragraph{Vecino mas cercano} asigna a cada celda el valor del punto
+observado mas cercano.
+\begin{verbatim}
+  function altura = altura_del_NN(i,j,global)
+  global lado_celda
+  altura = 0;
+  distancia  = 9999;
+  punto1 = [i*lado_celda , j*lado_celda];
+  punto2 = zeros(1,2);
+  for k=1:24;
+    punto2 = [datos(k,1) , datos(k,2)];
+    if (norm(punto1 - punto2) < distancia);
+      distancia = norm(punto1 - punto2);
+      altura = datos(k,3);
+    endif;
+  endfor;
+  endfunction;
+\end{verbatim}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/NN-05metros.png}
+  \caption{NN - 05 metros.}
+  \label{fig:mdt-nn05}
+\end{figure}
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/NN-20metros.png}
+  \caption{NN - 20 metros.}
+  \label{fig:mdt-nn20}
+\end{figure}
+Las figuras \ref{fig:mdt-nn05} y \ref{fig:mdt-nn20} corresponden a los
+MDT con mediante Nearest Neighbour tomando celdas de 05 y 20 metros respectivamente. 
+
+
+
+
+\subsubsection{LI - Linear Interpolation}
+\paragraph{Interpolacion Lineal} asigna a la celda el valor del promedio de los k
+puntos observados mas cercanos.
+\begin{verbatim}
+function altura = altura_con_LI(i,j,datos)
+% INTERPOLACION LINEAL: asigna a la celda el valor promedio de los k
+% puntos observados mas cercanos.
+  global lado_celda;
+  altura = 0;
+  k = 4;
+  punto_actual = [i*lado_celda , j*lado_celda];
+% espando la tabla de datos con una columna para poner las distancias
+  puntos = horzcat(datos,zeros(24,1));
+  for i=1:24;
+      puntos(i,4) = dist(punto_actual , [datos(i,1) , datos(i,2)]);
+  endfor;
+% la tabla queda ordenada de menor a mayor por la distancia
+  puntos = sortrows(puntos,4);
+  for i=1:k;
+      altura += puntos(i,3);
+  endfor
+  altura = altura / k;
+endfunction;
+
+function norma = dist(punto_a, punto_b)
+  norma = norm(punto_a - punto_b);
+endfunction;
+\end{verbatim}
+
+Las imagenes
+\ref{fig:mdt-nnk305}, \ref{fig:mdt-nnk320}, \ref{fig:mdt-nnk405} y
+\ref{fig:mdt-nnk420} corresponden a los MDT mediante Linear
+Interpolation para k=3/4 y 05/20 metros de celda, respectivamente.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/LI-k3-05metros.png}
+  \caption{LI - k=3 - 05 metros.}
+  \label{fig:mdt-nnk305}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/LI-k3-20metros.png}
+  \caption{LI - k=3 - 20 metros.}
+  \label{fig:mdt-nnk320}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/LI-k4-05metros.png}
+  \caption{LI - k=4 - 05 metros.}
+  \label{fig:mdt-nnk405}
+\end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/LI-k4-20metros.png}
+  \caption{LI - k=4 - 20 metros.}
+  \label{fig:mdt-nnk420}
+\end{figure}
+
+
+
+
+
+\subsubsection{IDW}
+\paragraph{Inversa distancia ponderada} asigna a la celda la media ponderada
+utilizando como factor de ponderacion la inversa de la distancia
+elevada al exponente \textit{b}. $z_i$ es el dato observado, $z_j$ es el dato
+interpolado y $d_{ij}$ la distancia entre ambos.
+\begin{equation*}
+z_j = \frac{\sum \frac{z_i}{{d_{ij}}^2}}{\sum \frac{1}{{d_{ij}}^2}}
+\end{equation*}
+\begin{verbatim}
+function altura = altura_con_IDW(i,j,datos)
+% INVERSA DISTANCIA PONDERADA asigna a la celda la media ponderada
+% utilizando como factor de ponderacion la inversa de la distancia
+% elevada al exponente b.
+  global lado_celda;
+  altura = 0;
+  distancia = 0;
+  b = 2;
+  punto_actual = [i*lado_celda , j*lado_celda];
+% expando la tabla de datos con dos columnas para poner, en la primera
+% el valor 1/di**b y en la segunda zi/dij**b
+  puntos = horzcat(datos,zeros(24,2));
+  for i=1:24;
+      distancia = dist(punto_actual , [datos(i,1) , datos(i,2)]);
+      puntos(i,4) = 1 / (distancia ** b);
+      puntos(i,5) = datos(i,3) / (distancia ** b);
+  endfor;
+  altura = sum(puntos(:,5)) / sum(puntos(:,4));
+endfunction;
+
+function norma = dist(punto_a, punto_b)
+  norma = norm(punto_a - punto_b);
+endfunction;
+\end{verbatim}
+
+Los siguientes son los MDTs calculados con el algoritmo anterior. Las
+figuras \ref{fig:mdt-idwb205} y \ref{fig:mdt-idwb220} corresponden al
+valor de b = 2, con celdas de lado 5 y 20 metros, respectivamente.
+Las figuras \ref{fig:mdt-idwb305} y \ref{fig:mdt-idwb320} representan
+el calculo con b = 3, para celdas de 5 y 20 metros de lado.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/IDW-b2-05metros.png}
+  \caption{IDW - b=2 - 05 metros.}
+  \label{fig:mdt-idwb205}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/IDW-b2-20metros.png}
+  \caption{IDW - b=2 - 20 metros.}
+  \label{fig:mdt-idwb220}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/IDW-b3-05metros.png}
+  \caption{IDW - b=3 - 05 metros.}
+  \label{fig:mdt-idwb305}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/IDW-b3-20metros.png}
+  \caption{IDW - b=3 - 20 metros.}
+  \label{fig:mdt-idwb320}
+\end{figure}
+
+
+
+
+
+
+\subsubsection{OCTAVE}
+\paragraph{griddata} se utiliza para interpolar un conjunto arbitrario
+de datos dispersos. GNU Octave utiliza funciones basadas en la
+Triangulacion de Delaunay en un plano. Una de ellas es griddata que
+genera una malla 2D regular a partir de una serie de datos irregular.
+Utiliza tres metodos de interpolacion: nearest, cubic o lineal.
+\begin{verbatim}
+function altura_con_GRIDDATA(datos)
+  x = datos(:,1);
+  y = datos(:,2);
+  z = datos(:,3);
+  [X,Y] = meshgrid(unique(x),unique(y));
+  Z = griddata(x,y,z,X,Y);
+  W = horzcat(X,Y,Z);
+  mesh(Z);
+\end{verbatim}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/GRIDDATA.png}
+  \caption{MDT con el metodo GRIDDATA de Octave.}
+  \label{fig:mdt-nn}
+\end{figure}
+
+
+
+
+
+\subsubsection{Error Cuadratico Medio y MDT mas representativo}
+Consideramos el metodo IDW (con b=2) como el mas indicado para obtener el MDT
+mas representativo. Vimos que representaba de manera mas suave las
+irregularidades del terreno, a diferencia de los demas.
+Ademas, este metodo es el unico que tiene en cuenta la totalidad de
+los puntos de los cuales tenemos informacion. Por el contrario, los
+metodos NN y LI "desperdician" parte de ella.
+Nos parecio importante ponderar la distancia de cada punto
+estimado a los datos, ya que no es tan relevante un punto lejano en
+comparacion con uno cercano.
+No tuvimos en cuenta, para la eleccion de nuestro mejor modelo, el
+Error Cuadratico Medio, porque notamos que solo tiene en cuenta el
+resultado de pocos puntos, dandoles la libertad a los demas de tener
+cualquier valor, sin influir en el error.
+
+Vale aclarar que era de esperar que el error del metodo NN diera cero,
+debido a que cada punto evaluado tenia la informacion directamente
+tomada de los datos. Sin embargo no fue asi. Esto se debe a la forma
+en que dividimos el terreno en una grilla dentro del algoritmo,
+tomando a la esquina de una celda como parametro de representacion.
+\begin{verbatim}
+function resultado = dif_cuadrados_media(datos,terreno,lado_celda)
+  diferencia = 0;
+  resultado = 0;
+  for i=1:24;
+    n = floor(datos(i,2) / lado_celda) ;
+    m = floor(datos(i,1) / lado_celda) ;
+    if n >= size(terreno)(1);
+       n -= 1;
+    endif
+    if n < 1;
+       n += 1;
+    endif;
+    if m >= size(terreno)(2);
+       m -= 1;
+    endif
+    disp(terreno(n,m));
+    disp(datos(i,3));
+    diferencia = datos(i,3) - terreno(n,m)
+    resultado += diferencia ** 2;
+  endfor
+  resultado = resultado / 24;
+endfunction;
+\end{verbatim}
+Con el algoritmo anterior, resulta que ECM = 0.12161 m para el calculo
+mediante IDW (con b=2), y la celda de 20 metros de lado. Para los
+metodos de NN y LI (k=3), los resultados son 0.26426 y 0.15611,
+respectivamente (ambos con lado = 20 metros).
+
+\subsubsection{Cortes longitudinales y transversales}
+Las siguientes imagenes corresponden a los cortes longitudinales y
+transversales del MDT mediante IDW con b=2 y celda de 20 metros de
+lado.
+El terreno tiene una medida de 1150m x 400m. Los primeros dos
+graficos, \ref{fig:trans200} y \ref{fig:trans400}, son cortes a lo
+largo de los 1150 metros. 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/fila05.png}
+  \caption{Corte longitudinal a los 100m.}
+  \label{fig:long100}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/fila15.png}
+  \caption{Corte longitudinal a los 300m.}
+  \label{fig:long300}
+\end{figure}
+
+Estos dos ultimos graficos, en cambio, son los cortes a lo ancho de
+los 400 metros.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/columna10.png}
+  \caption{Corte transversal a los 200m.}
+  \label{fig:trans200}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/columna20.png}
+  \caption{Corte transversal a los 400m.}
+  \label{fig:trans400}
+\end{figure}
+
+
+
+\subsubsection{Curvas de Nivel}
+El software toma los extremos de la funcion, y tantos valores
+intermedios hasta llegar al valor que uno le solicita mediante un
+numero ingresado como parametro. Estos valores los utiliza para
+determinar que curvas de nivel graficar. En la figura \ref{fig:curvas}
+utilizamos un n=10, por lo que grafica 10 curvas de nivel, indicando
+asi el terreno que esta a la misma altura.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{imagenes/curvas-10.png}
+  \caption{Curvas de nivel.}
+  \label{fig:curvas}
+\end{figure}
+
+\subsection{Conclusiones}
+Sabemos que estamos trabajando con un modelo del terreno, del cual
+tenemos pocos datos (en relacion a la dimension del mismo); y como cada
+metodo le da mas importancia a distintos aspectos de los datos, los
+resultados difieren bastante entre ellos.
+Si a priori conocieramos el aspecto del terreno podriamos tener
+preferencia
+por algun metodo en particular, que sea consistente con su forma. 
+
+Con respecto a la validacion de los modelos, una manera podria resultar de
+comparar (mediante la diferencia de cuadrados media)
+nuestros resultados, con un nuevo conjunto de datos tomados del mismo
+terreno, para ver si el que elegimos es el que arroja menor diferencia. 
+Otra forma de validacion que no requiere una muestra adicional
+resulta de ir sacando, de a uno, datos del
+primer set y corriendo el modelo con 23 datos. Luego se utiliza el
+dato restante y se calcula la diferencia con el estimado
+originalmente, para esa posicion. Repitiendo este proceso con todos
+los datos y sumando
+estas diferencias se tiene un buen parametro de la presicion del MDT.
+
+\newpage
+\begin{appendix}
+  \listoffigures
+\end{appendix}
+
+\end{document}
